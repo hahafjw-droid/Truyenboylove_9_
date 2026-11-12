@@ -1,0 +1,1759 @@
+```html
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioTruyện Pro - Nghe Truyện & Kiếm Tiền Quảng Cáo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            900: '#78350f',
+                        },
+                        dark: {
+                            950: '#090d16',
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wave': 'wave 1.2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        wave: {
+                            '0%, 100%': { transform: 'scaleY(0.3)' },
+                            '50%': { transform: 'scaleY(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        /* Sound wave bars */
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, #f59e0b, #fbbf24);
+            border-radius: 9999px;
+            transform-origin: bottom;
+            transition: height 0.2s ease;
+        }
+        .playing .wave-bar:nth-child(1) { animation: wave 0.9s infinite 0.1s; }
+        .playing .wave-bar:nth-child(2) { animation: wave 0.7s infinite 0.3s; }
+        .playing .wave-bar:nth-child(3) { animation: wave 1.1s infinite 0.0s; }
+        .playing .wave-bar:nth-child(4) { animation: wave 0.8s infinite 0.4s; }
+        .playing .wave-bar:nth-child(5) { animation: wave 1.0s infinite 0.2s; }
+        .playing .wave-bar:nth-child(6) { animation: wave 0.75s infinite 0.5s; }
+        .playing .wave-bar:nth-child(7) { animation: wave 0.95s infinite 0.15s; }
+        
+        /* Range Input Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #f59e0b;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-32 md:pb-28 select-none">
+
+    <!-- ==================== TOP AD BANNER (MONETIZATION SLOT 1) ==================== -->
+    <div id="top-ad-banner" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 px-4 py-2 relative transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5 cursor-pointer group" onclick="handleAdClick('top_banner')">
+                <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded">Quảng cáo</span>
+                <span class="font-medium text-slate-200 group-hover:text-amber-400 transition-colors">
+                    🎧 Tai nghe chống ồn Sony WH-1000XM5 - Giảm 35% dành riêng cho độc giả AudioTruyện!
+                </span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="handleAdClick('top_banner')" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold rounded-full text-xs transition shadow-lg shadow-amber-500/20">
+                    Nhận Ưu Đãi
+                </button>
+                <button onclick="closeTopBanner()" class="text-slate-400 hover:text-white p-1" title="Đóng quảng cáo">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== HEADER / NAVIGATION ==================== -->
+    <header class="sticky top-0 z-30 bg-dark-950/90 backdrop-blur-md border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchTab('library')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                    <i data-lucide="headphones" class="w-6 h-6 text-slate-950 stroke-[2.5]"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                        AudioTruyện<span class="text-amber-400">Pro</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 hidden sm:block">Nghe miễn phí • Hỗ trợ bởi Quảng cáo</p>
+                </div>
+            </div>
+
+            <!-- Main Navigation Tabs -->
+            <nav class="flex items-center bg-dark-900 p-1 rounded-xl border border-slate-800">
+                <button id="tab-btn-library" onclick="switchTab('library')" class="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-slate-950 shadow">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Kho Truyện</span>
+                </button>
+                <button id="tab-btn-publisher" onclick="switchTab('publisher')" class="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Doanh Thu Ad</span>
+                    <span id="nav-revenue-badge" class="hidden md:inline-block px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 rounded-md font-mono">0₫</span>
+                </button>
+            </nav>
+
+            <!-- User Wallet & VIP Status -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Coins Balance -->
+                <div onclick="openRewardModal('earn_coins')" class="cursor-pointer flex items-center gap-1.5 bg-dark-900 hover:bg-dark-800 border border-amber-500/30 px-2.5 sm:px-3 py-1.5 rounded-xl transition group" title="Xem quảng cáo để nhận thêm Xu">
+                    <div class="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition">
+                        <i data-lucide="coins" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <span id="user-coins" class="font-bold text-xs sm:text-sm text-amber-400">150</span>
+                    <span class="text-[10px] bg-amber-500 text-slate-950 font-bold px-1 rounded">+Xu</span>
+                </div>
+
+                <!-- VIP Status Toggle -->
+                <button id="vip-status-btn" onclick="toggleVipModal()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 transition">
+                    <i data-lucide="crown" class="w-3.5 h-3.5 text-slate-400" id="vip-crown-icon"></i>
+                    <span id="vip-label" class="hidden sm:inline">Thường</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+        <!-- ==================== VIEW 1: AUDIOBOOK LIBRARY & READER ==================== -->
+        <div id="view-library" class="space-y-6">
+            
+            <!-- Hero Banner / Quick Earn Coins Promo -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950/40 border border-slate-800 p-5 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="space-y-2 max-w-2xl z-10">
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        Công nghệ đọc AI Tiếng Việt tự nhiên • Miễn phí 100%
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                        Đắm chìm trong thế giới <span class="text-amber-400">Truyện Audio</span> sống động
+                    </h2>
+                    <p class="text-sm text-slate-300">
+                        Nghe miễn phí hàng ngàn chương truyện Tiên Hiệp, Ngôn Tình, Trinh Thám. Xem quảng cáo ngắn để mở khóa chương VIP hoặc tích lũy Xu thưởng!
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 z-10 shrink-0">
+                    <button onclick="openRewardModal('earn_coins')" class="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 transition transform hover:-translate-y-0.5">
+                        <i data-lucide="play-circle" class="w-5 h-5"></i>
+                        <span>Xem Quảng Cáo (+50 Xu)</span>
+                    </button>
+                    <button onclick="triggerMidRollAd(true)" class="flex items-center gap-2 px-4 py-3 rounded-xl bg-dark-900 hover:bg-dark-800 border border-slate-700 text-slate-200 font-semibold text-sm transition">
+                        <i data-lucide="tv" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Thử Chèn Ad Giữa Giờ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search & Category Filter -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <!-- Category Pills -->
+                <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                    <button onclick="filterCategory('all')" data-cat="all" class="cat-btn active px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition">
+                        Tất cả
+                    </button>
+                    <button onclick="filterCategory('Tiên Hiệp')" data-cat="Tiên Hiệp" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition">
+                        ⚔️ Tiên Hiệp
+                    </button>
+                    <button onclick="filterCategory('Ngôn Tình')" data-cat="Ngôn Tình" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition">
+                        💖 Ngôn Tình
+                    </button>
+                    <button onclick="filterCategory('Trinh Thám')" data-cat="Trinh Thám" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition">
+                        🔍 Trinh Thám
+                    </button>
+                    <button onclick="filterCategory('Kinh Dị')" data-cat="Kinh Dị" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition">
+                        👻 Kinh Dị
+                    </button>
+                    <button onclick="filterCategory('Kiếm Hiệp')" data-cat="Kiếm Hiệp" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition">
+                        🗡️ Kiếm Hiệp
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full md:w-72">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" oninput="renderStories()" placeholder="Tìm tên truyện, tác giả..." class="w-full bg-dark-900 border border-slate-800 focus:border-amber-500 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none transition">
+                </div>
+            </div>
+
+            <!-- Main Grid: Story List + Active Chapter Reader / Native Ad -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column: Story Cards Grid (7 cols on lg) -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                            <i data-lucide="library" class="w-5 h-5 text-amber-400"></i>
+                            <span>Danh Sách Truyện Audio</span>
+                        </h3>
+                        <span id="story-count" class="text-xs text-slate-400">Hiển thị 6 bộ truyện</span>
+                    </div>
+
+                    <div id="stories-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Rendered dynamically via JS -->
+                    </div>
+
+                    <!-- Native In-Feed Ad Slot (Monetization Slot 2) -->
+                    <div class="rounded-2xl bg-gradient-to-r from-indigo-950/60 to-slate-900 border border-indigo-500/30 p-4 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0 text-indigo-400">
+                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Tài trợ • Native Ad</span>
+                                    <span class="text-xs text-slate-400">Shopee Mall</span>
+                                </div>
+                                <h4 class="font-bold text-sm text-white mt-0.5">Máy đọc sách Kindle Paperwhite 5 - Bảo vệ mắt tối đa</h4>
+                                <p class="text-xs text-slate-400 line-clamp-1">Ưu đãi độc quyền giảm ngay 500.000đ khi nhập mã AUDIOTRUYEN.</p>
+                            </div>
+                        </div>
+                        <button onclick="handleAdClick('native_feed')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 transition">
+                            Xem Ngay
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Selected Story Chapters & Live Text Synchronizer (5 cols on lg) -->
+                <div class="lg:col-span-5">
+                    <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden sticky top-20 flex flex-col max-h-[calc(100vh-12rem)]">
+                        <!-- Story Detail Header -->
+                        <div id="selected-story-header" class="p-4 sm:p-5 bg-gradient-to-b from-slate-800/80 to-dark-900 border-b border-slate-800">
+                            <!-- Rendered via JS -->
+                        </div>
+
+                        <!-- Sub-tabs: Danh sách chương | Nội dung đang đọc -->
+                        <div class="flex border-b border-slate-800 bg-dark-950/50 px-4">
+                            <button id="subtab-chapters" onclick="switchSubTab('chapters')" class="py-2.5 px-3 text-xs font-bold border-b-2 border-amber-500 text-amber-400 transition">
+                                Danh Sách Chương
+                            </button>
+                            <button id="subtab-transcript" onclick="switchSubTab('transcript')" class="py-2.5 px-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                                <span>Lời Thoại Trực Tiếp</span>
+                                <span id="live-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden animate-ping"></span>
+                            </button>
+                        </div>
+
+                        <!-- Chapter List Container -->
+                        <div id="chapter-list-container" class="p-3 sm:p-4 overflow-y-auto space-y-2 flex-1">
+                            <!-- Rendered via JS -->
+                        </div>
+
+                        <!-- Live Transcript / Reader Container -->
+                        <div id="transcript-container" class="p-4 sm:p-5 overflow-y-auto hidden flex-1 space-y-3">
+                            <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800">
+                                <span id="transcript-chapter-title" class="font-semibold text-amber-400">Chương 1</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-800 text-[11px]">TTS Tiếng Việt</span>
+                            </div>
+                            <p id="transcript-text" class="text-sm sm:text-base leading-relaxed text-slate-200 whitespace-pre-line font-normal">
+                                Chọn một chương truyện để bắt đầu nghe...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 2: PUBLISHER / ADMIN REVENUE DASHBOARD ==================== -->
+        <div id="view-publisher" class="hidden space-y-6">
+            
+            <!-- Dashboard Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-dark-900 border border-slate-800 p-5 rounded-2xl">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md">PUBLISHER STUDIO</span>
+                        <span class="text-xs text-slate-400">Cập nhật thời gian thực</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1">Bảng Điều Khiển Doanh Thu Quảng Cáo</h2>
+                    <p class="text-xs sm:text-sm text-slate-400">Theo dõi hiệu suất kiếm tiền từ Banner, Mid-roll Audio/Video và Rewarded Video Ads.</p>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button onclick="simulateTrafficBurst()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>Giả Lập +1,000 Lượt Nghe</span>
+                    </button>
+                    <button onclick="resetAdStats()" class="p-2 rounded-xl bg-dark-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 transition" title="Đặt lại số liệu">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Metrics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Total Revenue VND -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                        <span>Tổng Doanh Thu Ước Tính</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="banknote" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div id="stat-revenue-vnd" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono">0 ₫</div>
+                        <div id="stat-revenue-usd" class="text-xs text-slate-400 mt-1 font-mono">≈ $0.00 USD</div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +18.4% hôm nay</span>
+                        <span class="text-slate-500">Tỷ giá: 25,400₫</span>
+                    </div>
+                </div>
+
+                <!-- Total Impressions -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                        <span>Lượt Hiển Thị (Impressions)</span>
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div id="stat-impressions" class="text-2xl sm:text-3xl font-extrabold text-white font-mono">0</div>
+                        <div class="text-xs text-slate-400 mt-1">Banner + Mid-roll + Rewarded</div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                        <span class="text-blue-400" id="stat-rewarded-count">0 lượt xem hết Video</span>
+                        <span class="text-slate-500">Fill rate: 98.5%</span>
+                    </div>
+                </div>
+
+                <!-- Clicks & CTR -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                        <span>Lượt Nhấp & Tỷ Lệ CTR</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                            <i data-lucide="mouse-pointer-click" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="flex items-baseline gap-2">
+                            <span id="stat-clicks" class="text-2xl sm:text-3xl font-extrabold text-white font-mono">0</span>
+                            <span id="stat-ctr" class="text-sm font-bold text-amber-400 font-mono">(0.00%)</span>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-1">Tương tác trực tiếp trên QC</div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">CPC Trung bình: ~1,200₫</span>
+                        <span class="text-emerald-400">Tốt</span>
+                    </div>
+                </div>
+
+                <!-- Average eCPM -->
+                <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                        <span>eCPM Trung Bình</span>
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center">
+                            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div id="stat-ecpm" class="text-2xl sm:text-3xl font-extrabold text-purple-400 font-mono">$4.85</div>
+                        <div class="text-xs text-slate-400 mt-1">Doanh thu / 1,000 hiển thị</div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Rewarded eCPM: $12.50</span>
+                        <span class="text-purple-400">Cao</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Breakdown & Ad Unit Configuration -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Revenue by Ad Format Table & Live Log (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Breakdown by Format -->
+                    <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+                        <h3 class="font-bold text-base text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-4 h-4 text-amber-400"></i>
+                            <span>Hiệu Quả Theo Định Dạng Quảng Cáo</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                                        <th class="py-2.5 px-3">Loại Quảng Cáo</th>
+                                        <th class="py-2.5 px-3 text-right">Hiển thị</th>
+                                        <th class="py-2.5 px-3 text-right">Clicks</th>
+                                        <th class="py-2.5 px-3 text-right">eCPM</th>
+                                        <th class="py-2.5 px-3 text-right">Doanh thu (VNĐ)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ad-breakdown-table" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Live Monetization Event Log -->
+                    <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Nhật Ký Kiếm Tiền Thời Gian Thực (Live Ad Events)</span>
+                            </h3>
+                            <span class="text-[11px] text-emerald-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Đang ghi nhận
+                            </span>
+                        </div>
+                        <div id="ad-event-logs" class="bg-dark-950 border border-slate-800 rounded-xl p-3 h-48 overflow-y-auto space-y-2 font-mono text-xs">
+                            <!-- Logs injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ad Network & Placement Settings (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-4 h-4 text-indigo-400"></i>
+                            <span>Cấu Hình Chèn Quảng Cáo & Mã VAST/AdSense</span>
+                        </h3>
+
+                        <!-- Toggle Switches for Ad Units -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-dark-950 border border-slate-800">
+                                <div>
+                                    <div class="font-semibold text-xs sm:text-sm text-white">Banner Đầu & Cuối Trang</div>
+                                    <div class="text-[11px] text-slate-400">Hiển thị liên tục khi duyệt truyện</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="cfg-banner" checked onchange="toggleAdConfig('banner')" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-dark-950 border border-slate-800">
+                                <div>
+                                    <div class="font-semibold text-xs sm:text-sm text-white">Quảng Cáo Giữa Giờ (Mid-roll)</div>
+                                    <div class="text-[11px] text-slate-400">Tự động phát sau mỗi 45 giây nghe hoặc chuyển chương</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="cfg-midroll" checked onchange="toggleAdConfig('midroll')" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-dark-950 border border-slate-800">
+                                <div>
+                                    <div class="font-semibold text-xs sm:text-sm text-white">Quảng Cáo Có Thưởng (Rewarded)</div>
+                                    <div class="text-[11px] text-slate-400">Mở khóa chương VIP & nhận Xu thưởng</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="cfg-rewarded" checked onchange="toggleAdConfig('rewarded')" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- AdSense / VAST Tag Integration Box -->
+                        <div class="space-y-2 pt-2">
+                            <label class="block text-xs font-semibold text-slate-300">Mã Publisher ID (Google AdSense / AdMob)</label>
+                            <input type="text" value="ca-pub-8942019482710492" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-500">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-semibold text-slate-300">VAST 4.0 Audio/Video Ad Tag URL</label>
+                            <textarea rows="2" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-400 focus:outline-none focus:border-amber-500">https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/audiotruyen_midroll&sz=640x480&gdfp_req=1&output=vast</textarea>
+                        </div>
+
+                        <button onclick="showToast('Đã lưu cấu hình mạng quảng cáo thành công!', 'success')" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition">
+                            Lưu Cấu Hình Kiếm Tiền
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ==================== FIXED BOTTOM AUDIO PLAYER BAR ==================== -->
+    <div id="audio-player-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-xl border-t border-slate-800 shadow-2xl transition-all">
+        
+        <!-- Mini Sticky Bottom Ad Strip (Monetization Slot 3) -->
+        <div id="player-ad-strip" class="bg-slate-900/90 border-b border-slate-800/80 px-4 py-1 flex items-center justify-between text-[11px]">
+            <div class="flex items-center gap-2 truncate cursor-pointer" onclick="handleAdClick('player_strip')">
+                <span class="px-1.5 py-0.2 bg-amber-500/20 text-amber-400 rounded font-bold text-[9px]">AD</span>
+                <span class="text-slate-300 truncate hover:text-amber-400 transition">Ứng dụng Đầu tư Tài chính Finhay - Tặng ngay 50.000đ cho tài khoản mới!</span>
+            </div>
+            <button onclick="handleAdClick('player_strip')" class="text-amber-400 font-semibold hover:underline shrink-0 ml-2">Mở App →</button>
+        </div>
+
+        <!-- Main Player Controls -->
+        <div class="max-w-7xl mx-auto px-4 py-2.5 sm:py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Left: Track Info & Sound Wave -->
+            <div class="flex items-center gap-3 w-full md:w-1/3">
+                <div class="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-slate-800">
+                    <img id="player-cover" src="https://placehold.co/100x100/1e293b/fbbf24?text=Audio" alt="Cover" class="w-full h-full object-cover">
+                    <!-- Animated Sound Wave Overlay -->
+                    <div id="sound-wave" class="absolute inset-0 bg-black/50 flex items-end justify-center gap-0.5 p-2 opacity-0 transition-opacity">
+                        <div class="wave-bar h-4"></div>
+                        <div class="wave-bar h-6"></div>
+                        <div class="wave-bar h-5"></div>
+                        <div class="wave-bar h-7"></div>
+                        <div class="wave-bar h-4"></div>
+                    </div>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <h4 id="player-title" class="font-bold text-xs sm:text-sm text-white truncate">Phàm Nhân Tu Tiên</h4>
+                        <span id="player-vip-badge" class="hidden px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-400 rounded">VIP</span>
+                    </div>
+                    <p id="player-chapter" class="text-xs text-amber-400 truncate">Chương 1: Sơn Biên Tiểu Thôn</p>
+                </div>
+                <!-- Mobile Play Button -->
+                <button onclick="togglePlay()" class="md:hidden w-10 h-10 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center shadow-lg shrink-0">
+                    <i data-lucide="play" id="mobile-play-icon" class="w-5 h-5 fill-current"></i>
+                </button>
+            </div>
+
+            <!-- Center: Playback Controls & Progress Bar -->
+            <div class="flex flex-col items-center w-full md:w-1/3 gap-1.5">
+                <div class="flex items-center gap-4 sm:gap-5">
+                    <button onclick="prevChapter()" class="text-slate-400 hover:text-white transition" title="Chương trước">
+                        <i data-lucide="skip-back" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <button onclick="seekRelative(-15)" class="text-slate-300 hover:text-amber-400 transition flex items-center text-[10px] font-bold" title="Lùi 15 giây">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <button onclick="togglePlay()" id="main-play-btn" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/30 transition transform active:scale-95">
+                        <i data-lucide="play" id="main-play-icon" class="w-5 h-5 fill-current ml-0.5"></i>
+                    </button>
+                    <button onclick="seekRelative(15)" class="text-slate-300 hover:text-amber-400 transition flex items-center text-[10px] font-bold" title="Tua tới 15 giây">
+                        <i data-lucide="rotate-cw" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <button onclick="nextChapter()" class="text-slate-400 hover:text-white transition" title="Chương tiếp theo">
+                        <i data-lucide="skip-forward" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full flex items-center gap-2.5 text-[11px] font-mono text-slate-400">
+                    <span id="time-current">00:00</span>
+                    <div class="relative flex-1 flex items-center">
+                        <input type="range" id="progress-slider" min="0" max="100" value="0" oninput="onSeekSlider(this.value)" class="w-full z-10">
+                        <!-- Mid-roll Ad Marker on Timeline -->
+                        <div class="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-indigo-400 pointer-events-none" title="Điểm chèn quảng cáo giữa giờ"></div>
+                    </div>
+                    <span id="time-duration">01:20</span>
+                </div>
+            </div>
+
+            <!-- Right: Speed, Sleep Timer, Volume -->
+            <div class="hidden md:flex items-center justify-end gap-3 w-1/3">
+                <!-- Playback Speed -->
+                <button onclick="cycleSpeed()" id="speed-btn" class="px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-700 border border-slate-700 text-xs font-bold text-slate-200 transition" title="Tốc độ đọc">
+                    1.0x
+                </button>
+
+                <!-- Sleep Timer -->
+                <button onclick="cycleSleepTimer()" id="sleep-btn" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-700 border border-slate-700 text-xs font-medium text-slate-300 transition" title="Hẹn giờ tắt">
+                    <i data-lucide="moon" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <span id="sleep-label">Tắt</span>
+                </button>
+
+                <!-- Volume -->
+                <div class="flex items-center gap-2 w-24">
+                    <button onclick="toggleMute()" class="text-slate-400 hover:text-white">
+                        <i data-lucide="volume-2" id="volume-icon" class="w-4 h-4"></i>
+                    </button>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" oninput="changeVolume(this.value)" class="w-full">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 1: REWARDED VIDEO & MID-ROLL AD PLAYER ==================== -->
+    <div id="ad-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-dark-900 border border-slate-700 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl transform transition-all">
+            
+            <!-- Ad Modal Top Bar -->
+            <div class="px-5 py-3.5 bg-dark-950 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span id="ad-modal-badge" class="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-500 text-slate-950 rounded">
+                        Quảng Cáo Có Thưởng
+                    </span>
+                    <span id="ad-modal-timer-text" class="text-xs text-slate-300 font-medium">
+                        Còn <strong id="ad-countdown" class="text-amber-400">8</strong> giây để nhận thưởng
+                    </span>
+                </div>
+                <button id="ad-skip-btn" onclick="closeAdModal(true)" disabled class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition">
+                    Đợi 5s...
+                </button>
+            </div>
+
+            <!-- Simulated Video / Rich Media Ad Content -->
+            <div class="relative aspect-video bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+                <!-- Animated Background Circles -->
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-2xl animate-pulse"></div>
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl animate-pulse"></div>
+
+                <div id="ad-creative-icon" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-slate-950 shadow-xl mb-4 animate-bounce">
+                    <i data-lucide="gamepad-2" class="w-9 h-9"></i>
+                </div>
+                <h3 id="ad-creative-title" class="text-xl sm:text-2xl font-extrabold text-white mb-2">
+                    Nhất Niệm Tiêu Dao - Game Tu Tiên Số 1
+                </h3>
+                <p id="ad-creative-desc" class="text-xs sm:text-sm text-slate-300 max-w-sm mb-5">
+                    Tải game ngay hôm nay để nhận 100 lượt quay Thần Tướng và Thú Cưỡi Kỳ Lân miễn phí!
+                </p>
+                <button onclick="handleAdClick('video_modal')" class="px-6 py-2.5 rounded-full bg-white hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg transition transform hover:scale-105">
+                    Tìm Hiểu Thêm & Tải Ngay
+                </button>
+
+                <!-- Video Progress Bar -->
+                <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-800">
+                    <div id="ad-progress-bar" class="h-full bg-amber-400 transition-all duration-1000 ease-linear" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Ad Modal Footer -->
+            <div class="px-5 py-3.5 bg-dark-950 flex items-center justify-between text-xs text-slate-400">
+                <span id="ad-reward-info" class="text-emerald-400 font-medium flex items-center gap-1.5">
+                    <i data-lucide="gift" class="w-4 h-4"></i> Phần thưởng: +50 Xu hoặc Mở khóa Chương VIP
+                </span>
+                <span class="text-[11px] text-slate-500">Google AdMob / VAST</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 2: UNLOCK VIP CHAPTER CHOICE ==================== -->
+    <div id="unlock-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-dark-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <i data-lucide="lock" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-white">Mở Khóa Chương VIP</h3>
+                        <p id="unlock-chapter-name" class="text-xs text-slate-400">Chương 3: Huyết Chiến Ma Tôn</p>
+                    </div>
+                </div>
+                <button onclick="closeUnlockModal()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Chương này thuộc nội dung độc quyền. Bạn có thể chọn <strong>xem một quảng cáo ngắn</strong> để nghe miễn phí ngay lập tức, hoặc dùng Xu tích lũy.
+            </p>
+
+            <div class="space-y-3">
+                <!-- Option 1: Watch Rewarded Ad (Monetization Driver) -->
+                <button onclick="startRewardedUnlock()" class="w-full p-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold flex items-center justify-between transition shadow-lg shadow-amber-500/20">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="play-circle" class="w-6 h-6"></i>
+                        <div class="text-left">
+                            <div class="text-sm font-extrabold">Xem Quảng Cáo (Miễn Phí)</div>
+                            <div class="text-[11px] opacity-85">Mở khóa vĩnh viễn chương này sau 8s</div>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-slate-950/20 text-xs font-extrabold">FREE</span>
+                </button>
+
+                <!-- Option 2: Use Coins -->
+                <button onclick="unlockWithCoins()" class="w-full p-3.5 rounded-2xl bg-dark-800 hover:bg-dark-700 border border-slate-700 text-white font-bold flex items-center justify-between transition">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="coins" class="w-6 h-6 text-amber-400"></i>
+                        <div class="text-left">
+                            <div class="text-sm font-bold">Dùng 50 Xu Thưởng</div>
+                            <div class="text-[11px] text-slate-400">Số dư hiện tại: <span id="modal-coin-balance" class="text-amber-400 font-bold">150</span> Xu</div>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-bold">-50 Xu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: VIP SUBSCRIPTION (AD-FREE OPTION) ==================== -->
+    <div id="vip-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-dark-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="crown" class="w-6 h-6 text-amber-400"></i>
+                    <h3 class="font-extrabold text-lg text-white">Gói Hội Viên VIP</h3>
+                </div>
+                <button onclick="toggleVipModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-600/10 border border-amber-500/30 space-y-2">
+                <div class="text-sm font-bold text-amber-400">Đặc quyền VIP AudioTruyện:</div>
+                <ul class="text-xs text-slate-300 space-y-1.5">
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Tắt 100% quảng cáo Banner & Mid-roll</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Mở khóa toàn bộ chương truyện VIP</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Tặng 500 Xu thưởng mỗi tháng</li>
+                </ul>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="activateVipSimulation()" id="btn-activate-vip" class="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-sm transition">
+                    Bật Trải Nghiệm VIP (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST NOTIFICATION ==================== -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
+    <script>
+        // ==================== 1. MOCK DATABASE OF AUDIOBOOKS ====================
+        const STORIES_DATA = [
+            {
+                id: 'story_1',
+                title: 'Phàm Nhân Tu Tiên',
+                author: 'Vong Ngữ',
+                category: 'Tiên Hiệp',
+                rating: '4.9',
+                views: '1.2M',
+                cover: 'https://placehold.co/300x400/1e1b4b/fbbf24?text=Pham+Nhan+Tu+Tien',
+                description: 'Một thiếu niên bình thường xuất thân từ sơn thôn nghèo khó, tình cờ bước vào con đường tu tiên đầy chông gai và mưu lược.',
+                chapters: [
+                    {
+                        id: 'c1_1',
+                        number: 1,
+                        title: 'Chương 1: Sơn Biên Tiểu Thôn',
+                        duration: '01:15',
+                        isLocked: false,
+                        content: 'Nhị Lăng Tử mở to đôi mắt đen láy, nhìn chằm chằm vào mái nhà tranh dột nát phía trên. Ngoài cửa sổ, tiếng gió rít qua rặng trúc xào xạc như lời thì thầm của núi rừng Ngũ Lý Câu. Hôm nay là ngày Thất Huyền Môn đến tuyển chọn đệ tử. Đối với một đứa trẻ sinh ra trong gia đình nông dân nghèo khó như Hàn Lập, đây là cơ hội duy nhất để đổi đời, giúp cha mẹ có thêm mấy đồng bạc lẻ mua gạo.'
+                    },
+                    {
+                        id: 'c1_2',
+                        number: 2,
+                        title: 'Chương 2: Thất Huyền Môn Khảo Hạch',
+                        duration: '01:30',
+                        isLocked: false,
+                        content: 'Đường lên núi Thái Bình dốc đứng quanh co. Hơn ba mươi thiếu niên cùng trang lứa thở hồng hộc, mồ hôi ướt đẫm lưng áo vải thô. Hàn Lập cắn chặt răng, đôi bàn tay nhỏ bé bám víu vào từng mỏm đá sắc nhọn. Trong lòng cậu chỉ có một ý niệm duy nhất: nhất định phải vượt qua khảo hạch của Mặc đại phu!'
+                    },
+                    {
+                        id: 'c1_3',
+                        number: 3,
+                        title: 'Chương 3: Chiếc Bình Xanh Thần Bí (VIP)',
+                        duration: '01:45',
+                        isLocked: true,
+                        content: 'Ánh trăng bàng bạc chiếu rọi xuống khu rừng phía sau Thần Thủ Cốc. Hàn Lập cẩn thận nhặt chiếc bình nhỏ màu xanh lục vừa rơi ra từ bụi cỏ. Trên thân bình khắc những hoa văn lá cây kỳ lạ, tỏa ra một luồng linh khí mát rượi khiến tinh thần cậu bỗng nhiên sảng khoái lạ thường. Cậu không ngờ rằng, bảo vật này sẽ thay đổi vận mệnh của toàn bộ tu tiên giới.'
+                    }
+                ]
+            },
+            {
+                id: 'story_2',
+                title: 'Tổng Tài Bá Đạo & Cô Vợ Nhỏ',
+                author: 'Diệp Tử',
+                category: 'Ngôn Tình',
+                rating: '4.8',
+                views: '980K',
+                cover: 'https://placehold.co/300x400/4c0519/fda4af?text=Tong+Tai+Ba+Dao',
+                description: 'Cuộc gặp gỡ định mệnh giữa cô họa sĩ trẻ tài năng và vị tổng giám đốc lạnh lùng của tập đoàn tài chính hàng đầu.',
+                chapters: [
+                    {
+                        id: 'c2_1',
+                        number: 1,
+                        title: 'Chương 1: Bản Hợp Đồng Đêm Mưa',
+                        duration: '01:10',
+                        isLocked: false,
+                        content: 'Mưa tầm tã trút xuống thành phố Thượng Hải hoa lệ. Tô Niệm ôm chặt tập bản thảo thiết kế trong lòng, vội vã chạy dưới mái hiên tòa nhà Lục Thị. Đúng lúc ấy, một chiếc Maybach đen bóng dừng lại ngay trước mặt cô. Cửa kính hạ xuống, lộ ra gương mặt góc cạnh lạnh lùng như tạc tượng của Lục Đình Kiêu.'
+                    },
+                    {
+                        id: 'c2_2',
+                        number: 2,
+                        title: 'Chương 2: Bí Mật Sau Ánh Đèn Sân Khấu (VIP)',
+                        duration: '01:25',
+                        isLocked: true,
+                        content: 'Bữa tiệc từ thiện tại khách sạn Hoàng Gia quy tụ toàn bộ giới thượng lưu. Khi mọi ánh nhìn đổ dồn về phía cửa chính, Lục Đình Kiêu bất ngờ nắm lấy tay Tô Niệm, dõng dạc tuyên bố trước hàng trăm ống kính phóng viên rằng cô chính là vị hôn thê duy nhất của anh.'
+                    }
+                ]
+            },
+            {
+                id: 'story_3',
+                title: 'Hồ Sơ Tâm Lý Tội Phạm',
+                author: 'Cương Thi Bút',
+                category: 'Trinh Thám',
+                rating: '4.9',
+                views: '850K',
+                cover: 'https://placehold.co/300x400/0f172a/38bdf8?text=Ho+So+Toi+Pham',
+                description: 'Những vụ án hóc búa không lời giải và cuộc đấu trí nghẹt thở giữa đội trưởng đội trọng án và kẻ sát nhân giấu mặt.',
+                chapters: [
+                    {
+                        id: 'c3_1',
+                        number: 1,
+                        title: 'Chương 1: Đồng Hồ Cát Ngược',
+                        duration: '01:20',
+                        isLocked: false,
+                        content: 'Đúng 12 giờ đêm, chuông điện thoại tại phòng trực ban đội trọng án reo vang dồn dập. Tại bảo tàng cổ vật trung tâm, người ta phát hiện một chiếc đồng hồ cát bằng pha lê đặt ngay giữa sảnh chính. Những hạt cát bên trong không chảy xuống dưới, mà lại bay ngược lên trên một cách đầy quỷ dị.'
+                    },
+                    {
+                        id: 'c3_2',
+                        number: 2,
+                        title: 'Chương 2: Mật Mã Dưới Đáy Giếng (VIP)',
+                        duration: '01:40',
+                        isLocked: true,
+                        content: 'Thám tử Trần Minh soi đèn pin xuống lòng giếng cạn. Trên vách đá rêu phong, những ký tự La Mã cổ đại được khắc sâu bằng một vật sắc nhọn. Ghép nối các chữ cái lại với nhau, anh bàng hoàng nhận ra mục tiêu tiếp theo của hung thủ chính là người cộng sự thân cận nhất của mình.'
+                    }
+                ]
+            },
+            {
+                id: 'story_4',
+                title: 'Ngôi Làng Trong Sương Mù',
+                author: 'Thảo Trang',
+                category: 'Kinh Dị',
+                rating: '4.7',
+                views: '740K',
+                cover: 'https://placehold.co/300x400/18181b/a855f7?text=Ngoi+Lang+Suong+Mu',
+                description: 'Chuyến du lịch khám phá vùng cao nguyên hẻo lánh biến thành cơn ác mộng khi cả nhóm lạc vào ngôi làng không có trên bản đồ.',
+                chapters: [
+                    {
+                        id: 'c4_1',
+                        number: 1,
+                        title: 'Chương 1: Tiếng Trống Canh Ba',
+                        duration: '01:15',
+                        isLocked: false,
+                        content: 'Sương mù dày đặc bao phủ con đèo Đá Trắng khiến tầm nhìn chỉ còn chưa đầy hai mét. Chiếc xe bán tải của nhóm phượt thủ bỗng dưng chết máy ngay trước cổng một ngôi làng cổ im lìm. Từ sâu trong màn sương, tiếng trống canh ba vang lên từng hồi chậm rãi, lạnh lẽo đến thấu xương.'
+                    },
+                    {
+                        id: 'c4_2',
+                        number: 2,
+                        title: 'Chương 2: Bức Ảnh Thờ Không Mặt (VIP)',
+                        duration: '01:35',
+                        isLocked: true,
+                        content: 'Ngọn đèn dầu leo lét hắt bóng lên bức tường gỗ mục nát. Minh tiến lại gần bàn thờ giữa gian nhà chính, kinh hãi nhận ra tất cả những khung ảnh trên đó đều bị ai đó dùng mực đỏ gạch xóa đi khuôn mặt, chỉ chừa lại đôi mắt đang trừng trừng nhìn thẳng vào cậu.'
+                    }
+                ]
+            },
+            {
+                id: 'story_5',
+                title: 'Tiếu Ngạo Giang Hồ Ngoại Truyện',
+                author: 'Kim Dung (Phóng tác)',
+                category: 'Kiếm Hiệp',
+                rating: '4.9',
+                views: '1.5M',
+                cover: 'https://placehold.co/300x400/14532d/4ade80?text=Tieu+Ngao+Giang+Ho',
+                description: 'Rượu ngon, kiếm báu và khúc nhạc Tiếu Ngạo Giang Hồ vang vọng khắp chốn võ lâm trung nguyên đầy thị phi.',
+                chapters: [
+                    {
+                        id: 'c5_1',
+                        number: 1,
+                        title: 'Chương 1: Độc Cô Cửu Kiếm',
+                        duration: '01:25',
+                        isLocked: false,
+                        content: 'Trên đỉnh Tư Quá Nhai quanh năm mây phủ, Lệnh Hồ Xung tay cầm bầu rượu hồ lô, ánh mắt sáng quắc nhìn những vết kiếm khắc trên vách đá trong hang động bí mật. Từng chiêu thức biến hóa khôn lường của Phong Thanh Dương tiền bối như hiện rõ mồn một trước mắt chàng.'
+                    },
+                    {
+                        id: 'c5_2',
+                        number: 2,
+                        title: 'Chương 2: Đại Chiến Hắc Mộc Nhai (VIP)',
+                        duration: '01:50',
+                        isLocked: true,
+                        content: 'Tiếng tiêu và tiếng đàn cầm hòa quyện vào nhau tạo nên một luồng nội lực vô hình đẩy lùi hàng trăm cao thủ Ma Giáo. Lệnh Hồ Xung rút thanh trường kiếm bên hông, mũi kiếm chỉ thẳng lên bầu trời, khí thế ngút ngàn như cầu vồng.'
+                    }
+                ]
+            }
+        ];
+
+        // Creative Ad Pool for Realistic Ad Rotation
+        const AD_CREATIVES = [
+            {
+                icon: 'gamepad-2',
+                title: 'Nhất Niệm Tiêu Dao - Game Tu Tiên Số 1',
+                desc: 'Tải game ngay hôm nay để nhận 100 lượt quay Thần Tướng và Thú Cưỡi Kỳ Lân miễn phí!',
+                cta: 'Tải Game Ngay'
+            },
+            {
+                icon: 'shopping-bag',
+                title: 'Siêu Sale 11.11 - Săn Voucher Giảm 50%',
+                desc: 'Hàng ngàn sản phẩm công nghệ, tai nghe Bluetooth chính hãng giảm giá sập sàn duy nhất hôm nay.',
+                cta: 'Săn Deal Ngay'
+            },
+            {
+                icon: 'wallet',
+                title: 'Ví Điện Tử ZaloPay - Hoàn Tiền 30%',
+                desc: 'Thanh toán hóa đơn điện nước, nạp thẻ điện thoại nhận ngay hoàn tiền trực tiếp vào ví.',
+                cta: 'Nhận Ưu Đãi'
+            }
+        ];
+
+        // ==================== 2. APPLICATION STATE ====================
+        let state = {
+            currentCategory: 'all',
+            selectedStoryId: 'story_1',
+            currentChapterId: 'c1_1',
+            unlockedChapters: new Set(['c1_1', 'c1_2', 'c2_1', 'c3_1', 'c4_1', 'c5_1']),
+            userCoins: 150,
+            isVip: false,
+            
+            // Audio / TTS State
+            isPlaying: false,
+            playbackRate: 1.0,
+            volume: 1.0,
+            progressPercent: 0,
+            elapsedSeconds: 0,
+            totalSeconds: 75,
+            sleepTimerMinutes: 0,
+            listenSecondsSinceLastAd: 0,
+
+            // Ad Monetization & Publisher Revenue State
+            adConfig: {
+                banner: true,
+                midroll: true,
+                rewarded: true
+            },
+            adStats: {
+                banner: { impressions: 1420, clicks: 38, ecpmUsd: 1.80 },
+                native: { impressions: 860, clicks: 29, ecpmUsd: 3.20 },
+                midroll: { impressions: 310, clicks: 19, ecpmUsd: 7.50 },
+                rewarded: { impressions: 185, clicks: 42, ecpmUsd: 12.50 }
+            },
+            pendingUnlockChapterId: null,
+            adModalMode: 'earn_coins', // 'earn_coins' | 'unlock_chapter' | 'midroll'
+            adTimerInterval: null
+        };
+
+        const USD_TO_VND = 25400;
+        let playbackInterval = null;
+        let speechUtterance = null;
+
+        // ==================== 3. INITIALIZATION ====================
+        window.onload = function() {
+            lucide.createIcons();
+            renderStories();
+            selectStory('story_1', false);
+            updateWalletUI();
+            updateRevenueDashboard();
+            logAdEvent('SYSTEM', 'Khởi tạo mạng quảng cáo AdSense & VAST 4.0 thành công.', 0);
+            
+            // Count initial banner impressions
+            recordAdImpression('banner', 2);
+            recordAdImpression('native', 1);
+        };
+
+        // ==================== 4. NAVIGATION & TABS ====================
+        function switchTab(tabName) {
+            const libView = document.getElementById('view-library');
+            const pubView = document.getElementById('view-publisher');
+            const btnLib = document.getElementById('tab-btn-library');
+            const btnPub = document.getElementById('tab-btn-publisher');
+
+            if (tabName === 'library') {
+                libView.classList.remove('hidden');
+                pubView.classList.add('hidden');
+                btnLib.className = 'flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-slate-950 shadow';
+                btnPub.className = 'flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white';
+            } else {
+                libView.classList.add('hidden');
+                pubView.classList.remove('hidden');
+                btnPub.className = 'flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-emerald-500 text-slate-950 shadow';
+                btnLib.className = 'flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white';
+                updateRevenueDashboard();
+            }
+            lucide.createIcons();
+        }
+
+        function switchSubTab(subTab) {
+            const chContainer = document.getElementById('chapter-list-container');
+            const trContainer = document.getElementById('transcript-container');
+            const btnCh = document.getElementById('subtab-chapters');
+            const btnTr = document.getElementById('subtab-transcript');
+
+            if (subTab === 'chapters') {
+                chContainer.classList.remove('hidden');
+                trContainer.classList.add('hidden');
+                btnCh.className = 'py-2.5 px-3 text-xs font-bold border-b-2 border-amber-500 text-amber-400 transition';
+                btnTr.className = 'py-2.5 px-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center gap-1.5';
+            } else {
+                chContainer.classList.add('hidden');
+                trContainer.classList.remove('hidden');
+                btnTr.className = 'py-2.5 px-3 text-xs font-bold border-b-2 border-amber-500 text-amber-400 transition flex items-center gap-1.5';
+                btnCh.className = 'py-2.5 px-3 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white transition';
+            }
+        }
+
+        // ==================== 5. LIBRARY & STORY RENDERING ====================
+        function filterCategory(category) {
+            state.currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'cat-btn active px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 text-slate-950 whitespace-nowrap transition';
+                } else {
+                    btn.className = 'cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-900 text-slate-300 hover:bg-dark-800 border border-slate-800 whitespace-nowrap transition';
+                }
+            });
+            renderStories();
+        }
+
+        function renderStories() {
+            const grid = document.getElementById('stories-grid');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+
+            const filtered = STORIES_DATA.filter(story => {
+                const matchCat = state.currentCategory === 'all' || story.category === state.currentCategory;
+                const matchSearch = story.title.toLowerCase().includes(searchQuery) || story.author.toLowerCase().includes(searchQuery);
+                return matchCat && matchSearch;
+            });
+
+            document.getElementById('story-count').textContent = `Hiển thị ${filtered.length} bộ truyện`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500 text-sm">Không tìm thấy truyện phù hợp.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(story => {
+                const isSelected = story.id === state.selectedStoryId;
+                const vipCount = story.chapters.filter(c => c.isLocked).length;
+                return `
+                    <div onclick="selectStory('${story.id}', true)" class="group cursor-pointer rounded-2xl bg-dark-900 border ${isSelected ? 'border-amber-500 ring-1 ring-amber-500/40' : 'border-slate-800 hover:border-slate-700'} p-3.5 flex gap-3.5 transition-all hover:bg-dark-800/60">
+                        <div class="relative w-20 h-28 rounded-xl overflow-hidden shrink-0 bg-slate-800">
+                            <img src="${story.cover}" alt="${story.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold bg-black/75 backdrop-blur-sm text-amber-400 rounded">
+                                ${story.category}
+                            </span>
+                        </div>
+                        <div class="flex flex-col justify-between flex-1 min-w-0">
+                            <div>
+                                <h4 class="font-bold text-sm text-white group-hover:text-amber-400 transition truncate">${story.title}</h4>
+                                <p class="text-xs text-slate-400 mt-0.5 truncate">Tác giả: ${story.author}</p>
+                                <p class="text-[11px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">${story.description}</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 mt-2 border-t border-slate-800/80 text-[11px]">
+                                <span class="text-slate-300 font-medium">${story.chapters.length} chương (${vipCount} VIP)</span>
+                                <span class="flex items-center gap-1 text-amber-400 font-bold">
+                                    <i data-lucide="headphones" class="w-3 h-3"></i> ${story.views}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function selectStory(storyId, autoPlayFirst = false) {
+            state.selectedStoryId = storyId;
+            const story = STORIES_DATA.find(s => s.id === storyId);
+            if (!story) return;
+
+            renderStories();
+
+            // Render Selected Story Header
+            const headerEl = document.getElementById('selected-story-header');
+            headerEl.innerHTML = `
+                <div class="flex items-center gap-3.5">
+                    <img src="${story.cover}" alt="${story.title}" class="w-14 h-18 rounded-xl object-cover border border-slate-700 shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-400 rounded">${story.category}</span>
+                            <span class="text-xs text-amber-400 font-bold">★ ${story.rating}</span>
+                        </div>
+                        <h3 class="font-extrabold text-base text-white truncate mt-1">${story.title}</h3>
+                        <p class="text-xs text-slate-400">Tác giả: ${story.author} • ${story.views} lượt nghe</p>
+                    </div>
+                </div>
+            `;
+
+            renderChapterList(story);
+
+            if (autoPlayFirst && story.chapters.length > 0) {
+                playChapter(story.chapters[0].id);
+            }
+        }
+
+        function renderChapterList(story) {
+            const container = document.getElementById('chapter-list-container');
+            container.innerHTML = story.chapters.map(ch => {
+                const isUnlocked = !ch.isLocked || state.unlockedChapters.has(ch.id) || state.isVip;
+                const isCurrent = state.currentChapterId === ch.id;
+
+                return `
+                    <div onclick="handleChapterClick('${ch.id}')" class="cursor-pointer p-3 rounded-xl border ${isCurrent ? 'bg-amber-500/10 border-amber-500/50' : 'bg-dark-950/60 border-slate-800/80 hover:border-slate-700'} flex items-center justify-between gap-3 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-lg ${isCurrent ? 'bg-amber-500 text-slate-950' : (isUnlocked ? 'bg-slate-800 text-slate-300' : 'bg-amber-500/15 text-amber-400')} flex items-center justify-center shrink-0">
+                                <i data-lucide="${isCurrent && state.isPlaying ? 'volume-2' : (isUnlocked ? 'play' : 'lock')}" class="w-4 h-4"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs sm:text-sm font-semibold ${isCurrent ? 'text-amber-400' : 'text-slate-200'} truncate">
+                                    ${ch.title}
+                                </div>
+                                <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                    <span>Thời lượng: ${ch.duration}</span>
+                                    ${!isUnlocked ? '<span class="text-amber-400 font-semibold">• Xem QC để mở khóa</span>' : '<span class="text-emerald-400">• Sẵn sàng nghe</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        ${!isUnlocked ? `
+                            <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-[11px] font-bold shrink-0">
+                                Mở VIP
+                            </span>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function handleChapterClick(chapterId) {
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            const chapter = story.chapters.find(c => c.id === chapterId);
+            if (!chapter) return;
+
+            const isUnlocked = !chapter.isLocked || state.unlockedChapters.has(chapter.id) || state.isVip;
+
+            if (!isUnlocked) {
+                state.pendingUnlockChapterId = chapter.id;
+                document.getElementById('unlock-chapter-name').textContent = `${story.title} - ${chapter.title}`;
+                document.getElementById('modal-coin-balance').textContent = state.userCoins;
+                const modal = document.getElementById('unlock-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                return;
+            }
+
+            playChapter(chapterId);
+        }
+
+        // ==================== 6. AUDIO PLAYER & WEB SPEECH API (TTS) ====================
+        function playChapter(chapterId) {
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            const chapter = story.chapters.find(c => c.id === chapterId);
+            if (!chapter) return;
+
+            // Count banner impression on chapter change
+            if (state.adConfig.banner) {
+                recordAdImpression('banner', 1);
+            }
+
+            state.currentChapterId = chapterId;
+            state.elapsedSeconds = 0;
+            state.progressPercent = 0;
+
+            // Update Player Bar Info
+            document.getElementById('player-cover').src = story.cover;
+            document.getElementById('player-title').textContent = story.title;
+            document.getElementById('player-chapter').textContent = chapter.title;
+            document.getElementById('time-duration').textContent = chapter.duration;
+            document.getElementById('time-current').textContent = '00:00';
+            document.getElementById('progress-slider').value = 0;
+
+            const vipBadge = document.getElementById('player-vip-badge');
+            if (chapter.isLocked) vipBadge.classList.remove('hidden');
+            else vipBadge.classList.add('hidden');
+
+            // Update Transcript View
+            document.getElementById('transcript-chapter-title').textContent = chapter.title;
+            document.getElementById('transcript-text').textContent = chapter.content;
+            switchSubTab('transcript');
+
+            renderChapterList(story);
+            startAudioPlayback(chapter.content);
+        }
+
+        function startAudioPlayback(textToRead) {
+            stopAudioPlayback();
+            state.isPlaying = true;
+            updatePlayButtonUI();
+
+            // Web Speech API (Vietnamese TTS)
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                speechUtterance = new SpeechSynthesisUtterance(textToRead);
+                speechUtterance.lang = 'vi-VN';
+                speechUtterance.rate = state.playbackRate;
+                speechUtterance.volume = state.volume;
+
+                speechUtterance.onend = () => {
+                    if (state.isPlaying) {
+                        nextChapter();
+                    }
+                };
+                window.speechSynthesis.speak(speechUtterance);
+            }
+
+            // Progress & Mid-Roll Ad Timer Loop
+            playbackInterval = setInterval(() => {
+                if (!state.isPlaying) return;
+
+                state.elapsedSeconds += 1;
+                state.listenSecondsSinceLastAd += 1;
+
+                if (state.elapsedSeconds >= state.totalSeconds) {
+                    state.elapsedSeconds = 0;
+                    nextChapter();
+                    return;
+                }
+
+                // Update Timeline UI
+                const pct = Math.min(100, Math.round((state.elapsedSeconds / state.totalSeconds) * 100));
+                document.getElementById('progress-slider').value = pct;
+                document.getElementById('time-current').textContent = formatTime(state.elapsedSeconds);
+
+                // Automatic Mid-roll Ad Trigger (every 35 seconds of listening if not VIP)
+                if (state.adConfig.midroll && !state.isVip && state.listenSecondsSinceLastAd >= 35) {
+                    state.listenSecondsSinceLastAd = 0;
+                    triggerMidRollAd(false);
+                }
+            }, 1000);
+        }
+
+        function stopAudioPlayback() {
+            state.isPlaying = false;
+            updatePlayButtonUI();
+            if (playbackInterval) clearInterval(playbackInterval);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.pause();
+            }
+        }
+
+        function togglePlay() {
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            const chapter = story.chapters.find(c => c.id === state.currentChapterId);
+
+            if (state.isPlaying) {
+                stopAudioPlayback();
+            } else {
+                if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+                    state.isPlaying = true;
+                    updatePlayButtonUI();
+                    window.speechSynthesis.resume();
+                    playbackInterval = setInterval(() => {
+                        if (!state.isPlaying) return;
+                        state.elapsedSeconds += 1;
+                        state.listenSecondsSinceLastAd += 1;
+                        const pct = Math.min(100, Math.round((state.elapsedSeconds / state.totalSeconds) * 100));
+                        document.getElementById('progress-slider').value = pct;
+                        document.getElementById('time-current').textContent = formatTime(state.elapsedSeconds);
+                        if (state.adConfig.midroll && !state.isVip && state.listenSecondsSinceLastAd >= 35) {
+                            state.listenSecondsSinceLastAd = 0;
+                            triggerMidRollAd(false);
+                        }
+                    }, 1000);
+                } else {
+                    startAudioPlayback(chapter.content);
+                }
+            }
+        }
+
+        function updatePlayButtonUI() {
+            const mainIcon = document.getElementById('main-play-icon');
+            const mobileIcon = document.getElementById('mobile-play-icon');
+            const wave = document.getElementById('sound-wave');
+            const liveDot = document.getElementById('live-dot');
+
+            if (state.isPlaying) {
+                mainIcon.setAttribute('data-lucide', 'pause');
+                mobileIcon.setAttribute('data-lucide', 'pause');
+                wave.classList.remove('opacity-0');
+                wave.classList.add('playing');
+                liveDot.classList.remove('hidden');
+            } else {
+                mainIcon.setAttribute('data-lucide', 'play');
+                mobileIcon.setAttribute('data-lucide', 'play');
+                wave.classList.add('opacity-0');
+                wave.classList.remove('playing');
+                liveDot.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function seekRelative(delta) {
+            state.elapsedSeconds = Math.max(0, Math.min(state.totalSeconds, state.elapsedSeconds + delta));
+            const pct = Math.round((state.elapsedSeconds / state.totalSeconds) * 100);
+            document.getElementById('progress-slider').value = pct;
+            document.getElementById('time-current').textContent = formatTime(state.elapsedSeconds);
+        }
+
+        function onSeekSlider(val) {
+            state.elapsedSeconds = Math.round((val / 100) * state.totalSeconds);
+            document.getElementById('time-current').textContent = formatTime(state.elapsedSeconds);
+        }
+
+        function prevChapter() {
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            const idx = story.chapters.findIndex(c => c.id === state.currentChapterId);
+            if (idx > 0) {
+                handleChapterClick(story.chapters[idx - 1].id);
+            } else {
+                showToast('Bạn đang ở chương đầu tiên của truyện.', 'info');
+            }
+        }
+
+        function nextChapter() {
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            const idx = story.chapters.findIndex(c => c.id === state.currentChapterId);
+            if (idx < story.chapters.length - 1) {
+                handleChapterClick(story.chapters[idx + 1].id);
+            } else {
+                stopAudioPlayback();
+                showToast('Đã phát hết các chương hiện có!', 'success');
+            }
+        }
+
+        function cycleSpeed() {
+            const speeds = [0.75, 1.0, 1.25, 1.5, 2.0];
+            const nextIdx = (speeds.indexOf(state.playbackRate) + 1) % speeds.length;
+            state.playbackRate = speeds[nextIdx];
+            document.getElementById('speed-btn').textContent = `${state.playbackRate}x`;
+            if (state.isPlaying) {
+                const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+                const chapter = story.chapters.find(c => c.id === state.currentChapterId);
+                startAudioPlayback(chapter.content);
+            }
+        }
+
+        function cycleSleepTimer() {
+            const options = [0, 15, 30, 60];
+            const nextIdx = (options.indexOf(state.sleepTimerMinutes) + 1) % options.length;
+            state.sleepTimerMinutes = options[nextIdx];
+            document.getElementById('sleep-label').textContent = state.sleepTimerMinutes === 0 ? 'Tắt' : `${state.sleepTimerMinutes}p`;
+            if (state.sleepTimerMinutes > 0) {
+                showToast(`Đã hẹn giờ tắt âm thanh sau ${state.sleepTimerMinutes} phút.`, 'info');
+            }
+        }
+
+        function changeVolume(val) {
+            state.volume = parseFloat(val);
+            const icon = document.getElementById('volume-icon');
+            icon.setAttribute('data-lucide', state.volume === 0 ? 'volume-x' : 'volume-2');
+            lucide.createIcons();
+        }
+
+        function toggleMute() {
+            const slider = document.getElementById('volume-slider');
+            if (state.volume > 0) {
+                slider.value = 0;
+                changeVolume(0);
+            } else {
+                slider.value = 1;
+                changeVolume(1);
+            }
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // ==================== 7. AD MONETIZATION ENGINE ====================
+        function closeUnlockModal() {
+            const modal = document.getElementById('unlock-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function startRewardedUnlock() {
+            closeUnlockModal();
+            openRewardModal('unlock_chapter');
+        }
+
+        function unlockWithCoins() {
+            if (state.userCoins < 50) {
+                showToast('Bạn không đủ 50 Xu! Hãy xem quảng cáo để nhận thêm Xu miễn phí.', 'error');
+                return;
+            }
+            state.userCoins -= 50;
+            updateWalletUI();
+            if (state.pendingUnlockChapterId) {
+                state.unlockedChapters.add(state.pendingUnlockChapterId);
+                closeUnlockModal();
+                showToast('Đã mở khóa chương VIP bằng 50 Xu!', 'success');
+                playChapter(state.pendingUnlockChapterId);
+            }
+        }
+
+        // Open Rewarded Video or Mid-roll Ad Modal
+        function openRewardModal(mode) {
+            if (!state.adConfig.rewarded && mode !== 'midroll') {
+                showToast('Quảng cáo có thưởng đang tạm tắt trong cấu hình Admin.', 'info');
+                return;
+            }
+
+            state.adModalMode = mode;
+            const wasPlaying = state.isPlaying;
+            if (wasPlaying) stopAudioPlayback();
+
+            // Pick random ad creative
+            const creative = AD_CREATIVES[Math.floor(Math.random() * AD_CREATIVES.length)];
+            document.getElementById('ad-creative-title').textContent = creative.title;
+            document.getElementById('ad-creative-desc').textContent = creative.desc;
+
+            const badge = document.getElementById('ad-modal-badge');
+            const rewardInfo = document.getElementById('ad-reward-info');
+            const skipBtn = document.getElementById('ad-skip-btn');
+
+            let totalDuration = mode === 'midroll' ? 6 : 8;
+            let remaining = totalDuration;
+
+            if (mode === 'midroll') {
+                badge.textContent = 'Quảng Cáo Giữa Giờ (Mid-Roll)';
+                badge.className = 'px-2 py-0.5 text-[10px] font-extrabold uppercase bg-indigo-500 text-white rounded';
+                rewardInfo.innerHTML = `<i data-lucide="info" class="w-4 h-4"></i> Truyện sẽ tự động phát tiếp sau quảng cáo`;
+                recordAdImpression('midroll', 1);
+            } else {
+                badge.textContent = 'Quảng Cáo Có Thưởng (Rewarded)';
+                badge.className = 'px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-500 text-slate-950 rounded';
+                rewardInfo.innerHTML = mode === 'unlock_chapter'
+                    ? `<i data-lucide="unlock" class="w-4 h-4"></i> Xem hết để mở khóa Chương VIP miễn phí`
+                    : `<i data-lucide="gift" class="w-4 h-4"></i> Xem hết để nhận ngay +50 Xu thưởng`;
+                recordAdImpression('rewarded', 1);
+            }
+
+            document.getElementById('ad-countdown').textContent = remaining;
+            document.getElementById('ad-progress-bar').style.width = '0%';
+            skipBtn.disabled = true;
+            skipBtn.textContent = `Đợi 5s...`;
+            skipBtn.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-500 cursor-not-allowed transition';
+
+            const modal = document.getElementById('ad-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+
+            if (state.adTimerInterval) clearInterval(state.adTimerInterval);
+
+            let elapsed = 0;
+            state.adTimerInterval = setInterval(() => {
+                elapsed += 1;
+                remaining = Math.max(0, totalDuration - elapsed);
+                document.getElementById('ad-countdown').textContent = remaining;
+                document.getElementById('ad-progress-bar').style.width = `${(elapsed / totalDuration) * 100}%`;
+
+                // Allow skip after 5 seconds
+                if (elapsed >= 5 && remaining > 0) {
+                    skipBtn.disabled = false;
+                    skipBtn.textContent = mode === 'midroll' ? 'Bỏ qua QC ✕' : 'Bỏ qua (Không thưởng)';
+                    skipBtn.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-700 hover:bg-slate-600 text-white cursor-pointer transition';
+                }
+
+                if (remaining === 0) {
+                    clearInterval(state.adTimerInterval);
+                    completeAdReward();
+                }
+            }, 1000);
+        }
+
+        function triggerMidRollAd(isManualTest = false) {
+            if (state.isVip && !isManualTest) return;
+            openRewardModal('midroll');
+        }
+
+        function completeAdReward() {
+            const modal = document.getElementById('ad-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            if (state.adModalMode === 'earn_coins') {
+                state.userCoins += 50;
+                updateWalletUI();
+                showToast('Chúc mừng! Bạn đã nhận được +50 Xu từ quảng cáo.', 'success');
+            } else if (state.adModalMode === 'unlock_chapter' && state.pendingUnlockChapterId) {
+                state.unlockedChapters.add(state.pendingUnlockChapterId);
+                showToast('Đã mở khóa chương VIP thành công!', 'success');
+                playChapter(state.pendingUnlockChapterId);
+            } else if (state.adModalMode === 'midroll') {
+                showToast('Cảm ơn bạn đã ủng hộ tác giả qua quảng cáo!', 'info');
+                const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+                const chapter = story.chapters.find(c => c.id === state.currentChapterId);
+                if (chapter) startAudioPlayback(chapter.content);
+            }
+        }
+
+        function closeAdModal(skippedByUser = false) {
+            if (state.adTimerInterval) clearInterval(state.adTimerInterval);
+            const modal = document.getElementById('ad-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            if (skippedByUser) {
+                if (state.adModalMode === 'midroll') {
+                    const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+                    const chapter = story.chapters.find(c => c.id === state.currentChapterId);
+                    if (chapter) startAudioPlayback(chapter.content);
+                } else {
+                    showToast('Bạn đã bỏ qua quảng cáo nên chưa nhận được phần thưởng.', 'info');
+                }
+            }
+        }
+
+        // ==================== 8. REVENUE TRACKING & PUBLISHER DASHBOARD ====================
+        function recordAdImpression(type, count = 1) {
+            if (!state.adStats[type]) return;
+            state.adStats[type].impressions += count;
+            const earnedVnd = (count / 1000) * state.adStats[type].ecpmUsd * USD_TO_VND;
+            logAdEvent('IMPRESSION', `Hiển thị [${type.toUpperCase()}] (+${count})`, earnedVnd);
+            updateRevenueDashboard();
+        }
+
+        function handleAdClick(source) {
+            let type = 'banner';
+            if (source === 'native_feed') type = 'native';
+            if (source === 'video_modal') type = state.adModalMode === 'midroll' ? 'midroll' : 'rewarded';
+
+            state.adStats[type].clicks += 1;
+            // Direct click bonus revenue (~1,200 VND CPC)
+            const cpcBonusVnd = 1200;
+            state.adStats[type].impressions += 1;
+
+            logAdEvent('CLICK_CPC', `Người dùng click quảng cáo tại [${source}]`, cpcBonusVnd);
+            updateRevenueDashboard();
+            showToast('Đang mở trang ưu đãi của nhà tài trợ... (+Doanh thu CPC cho chủ web)', 'success');
+        }
+
+        function updateRevenueDashboard() {
+            let totalImp = 0;
+            let totalClicks = 0;
+            let totalUsd = 0;
+
+            const labels = {
+                banner: 'Banner Đầu/Cuối Trang',
+                native: 'Native Ad Trong Danh Sách',
+                midroll: 'Mid-roll Audio/Video Giữa Giờ',
+                rewarded: 'Rewarded Video Mở Khóa VIP'
+            };
+
+            let tableHtml = '';
+
+            for (const [key, data] of Object.entries(state.adStats)) {
+                // Revenue = (Impressions / 1000 * eCPM) + (Clicks * $0.045 CPC)
+                const usd = (data.impressions / 1000) * data.ecpmUsd + (data.clicks * 0.045);
+                const vnd = Math.round(usd * USD_TO_VND);
+
+                totalImp += data.impressions;
+                totalClicks += data.clicks;
+                totalUsd += usd;
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-3 px-3 font-medium text-white">${labels[key]}</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-300">${data.impressions.toLocaleString('vi-VN')}</td>
+                        <td class="py-3 px-3 text-right font-mono text-amber-400">${data.clicks.toLocaleString('vi-VN')}</td>
+                        <td class="py-3 px-3 text-right font-mono text-purple-400">$${data.ecpmUsd.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400">${vnd.toLocaleString('vi-VN')} ₫</td>
+                    </tr>
+                `;
+            }
+
+            const totalVnd = Math.round(totalUsd * USD_TO_VND);
+            const avgCtr = totalImp > 0 ? ((totalClicks / totalImp) * 100).toFixed(2) : '0.00';
+            const avgEcpm = totalImp > 0 ? ((totalUsd / totalImp) * 1000).toFixed(2) : '0.00';
+
+            document.getElementById('stat-revenue-vnd').textContent = `${totalVnd.toLocaleString('vi-VN')} ₫`;
+            document.getElementById('stat-revenue-usd').textContent = `≈ $${totalUsd.toFixed(2)} USD`;
+            document.getElementById('stat-impressions').textContent = totalImp.toLocaleString('vi-VN');
+            document.getElementById('stat-rewarded-count').textContent = `${state.adStats.rewarded.impressions} lượt xem hết Video`;
+            document.getElementById('stat-clicks').textContent = totalClicks.toLocaleString('vi-VN');
+            document.getElementById('stat-ctr').textContent = `(${avgCtr}%)`;
+            document.getElementById('stat-ecpm').textContent = `$${avgEcpm}`;
+            document.getElementById('nav-revenue-badge').textContent = `${totalVnd.toLocaleString('vi-VN')}₫`;
+
+            document.getElementById('ad-breakdown-table').innerHTML = tableHtml;
+        }
+
+        function simulateTrafficBurst() {
+            state.adStats.banner.impressions += 650;
+            state.adStats.banner.clicks += 14;
+            state.adStats.native.impressions += 200;
+            state.adStats.native.clicks += 8;
+            state.adStats.midroll.impressions += 100;
+            state.adStats.midroll.clicks += 6;
+            state.adStats.rewarded.impressions += 50;
+            state.adStats.rewarded.clicks += 12;
+
+            logAdEvent('TRAFFIC_SPIKE', 'Giả lập 1,000 lượt nghe mới hoàn tất!', 145000);
+            updateRevenueDashboard();
+            showToast('Đã mô phỏng +1,000 lượt nghe truyện! Doanh thu tăng đáng kể.', 'success');
+        }
+
+        function resetAdStats() {
+            state.adStats = {
+                banner: { impressions: 0, clicks: 0, ecpmUsd: 1.80 },
+                native: { impressions: 0, clicks: 0, ecpmUsd: 3.20 },
+                midroll: { impressions: 0, clicks: 0, ecpmUsd: 7.50 },
+                rewarded: { impressions: 0, clicks: 0, ecpmUsd: 12.50 }
+            };
+            document.getElementById('ad-event-logs').innerHTML = '';
+            logAdEvent('RESET', 'Đã đặt lại toàn bộ dữ liệu thống kê quảng cáo.', 0);
+            updateRevenueDashboard();
+        }
+
+        function logAdEvent(tag, message, vndAmount) {
+            const logBox = document.getElementById('ad-event-logs');
+            if (!logBox) return;
+            const now = new Date().toLocaleTimeString('vi-VN');
+            const badgeColor = tag === 'CLICK_CPC' ? 'text-amber-400' : (tag === 'TRAFFIC_SPIKE' ? 'text-purple-400' : 'text-emerald-400');
+            const amountStr = vndAmount > 0 ? `<span class="text-emerald-400 font-bold">+${Math.round(vndAmount).toLocaleString('vi-VN')}₫</span>` : '';
+
+            const entry = document.createElement('div');
+            entry.className = 'flex items-center justify-between border-b border-slate-800/50 pb-1.5';
+            entry.innerHTML = `
+                <div class="truncate pr-2">
+                    <span class="text-slate-500">[${now}]</span>
+                    <span class="${badgeColor} font-bold">[${tag}]</span>
+                    <span class="text-slate-300">${message}</span>
+                </div>
+                ${amountStr}
+            `;
+            logBox.prepend(entry);
+        }
+
+        function toggleAdConfig(type) {
+            const isChecked = document.getElementById(`cfg-${type}`).checked;
+            state.adConfig[type] = isChecked;
+
+            if (type === 'banner') {
+                document.getElementById('top-ad-banner').style.display = isChecked ? 'block' : 'none';
+                document.getElementById('player-ad-strip').style.display = isChecked ? 'flex' : 'none';
+            }
+            showToast(`Đã ${isChecked ? 'BẬT' : 'TẮT'} quảng cáo ${type.toUpperCase()}.`, 'info');
+        }
+
+        function closeTopBanner() {
+            document.getElementById('top-ad-banner').style.display = 'none';
+        }
+
+        // ==================== 9. WALLET, VIP & TOAST HELPERS ====================
+        function updateWalletUI() {
+            document.getElementById('user-coins').textContent = state.userCoins;
+        }
+
+        function toggleVipModal() {
+            const modal = document.getElementById('vip-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function activateVipSimulation() {
+            state.isVip = !state.isVip;
+            const crown = document.getElementById('vip-crown-icon');
+            const label = document.getElementById('vip-label');
+            const btn = document.getElementById('btn-activate-vip');
+
+            if (state.isVip) {
+                crown.classList.remove('text-slate-400');
+                crown.classList.add('text-amber-400');
+                label.textContent = 'Hội Viên VIP';
+                label.classList.add('text-amber-400');
+                btn.textContent = 'Hủy Trạng Thái VIP (Quay lại dùng QC)';
+                document.getElementById('top-ad-banner').style.display = 'none';
+                document.getElementById('player-ad-strip').style.display = 'none';
+                showToast('Đã kích hoạt VIP: Tắt toàn bộ quảng cáo & Mở khóa mọi chương!', 'success');
+            } else {
+                crown.classList.add('text-slate-400');
+                crown.classList.remove('text-amber-400');
+                label.textContent = 'Thường';
+                label.classList.remove('text-amber-400');
+                btn.textContent = 'Bật Trải Nghiệm VIP (Demo)';
+                if (state.adConfig.banner) {
+                    document.getElementById('top-ad-banner').style.display = 'block';
+                    document.getElementById('player-ad-strip').style.display = 'flex';
+                }
+                showToast('Đã chuyển về tài khoản thường (Có chèn quảng cáo).', 'info');
+            }
+
+            toggleVipModal();
+            const story = STORIES_DATA.find(s => s.id === state.selectedStoryId);
+            if (story) renderChapterList(story);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200',
+                error: 'bg-red-950/95 border-red-500/50 text-red-200',
+                info: 'bg-slate-900/95 border-amber-500/50 text-slate-200'
+            };
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border ${colors[type]} shadow-xl backdrop-blur-md text-xs sm:text-sm font-medium flex items-center gap-2.5 transform transition-all duration-300 translate-x-0`;
+            toast.innerHTML = `
+                <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : (type === 'error' ? 'bg-red-400' : 'bg-amber-400')}"></span>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+    </script>
+</body>
+</html>
+```
